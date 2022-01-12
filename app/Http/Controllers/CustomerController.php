@@ -39,17 +39,20 @@ class CustomerController extends Controller
         $last_name = $request->get('last_name');
         $email = $request->get('email');
         $address = $request->get('address');
-
-        $customer = new Customer([
-            'first_name' => $first_name,
-            'last_name' => $last_name,
-            'email' => $email,
-            'address' => $address
-        ]);
-        $customer->save();
-        return $customer;
+        $existing_customer = Customer::where('email', '=', $email)->count();
+        if ($existing_customer == 0) {
+            $customer = new Customer([
+                'first_name' => $first_name,
+                'last_name' => $last_name,
+                'email' => $email,
+                'address' => $address
+            ]);
+            $customer->save();
+            return $customer;
+        }
+        
+        return response()->json(["message", "Email already associated with existing user"], 401);
     }
-
     /**
      * Display the specified resource.
      *
@@ -88,8 +91,12 @@ class CustomerController extends Controller
             $customer->last_name = $request->get('last_name');
         }
         if ($request->get('email')) {
-            $customer->email = $request->get('email');
+            $existing_customer = Customer::where('email', '=', $request->get('email'))->count();
+            if ($existing_customer == 0) {
+                $customer->email = $request->get('email');
+            }
         }
+
         if ($request->get('address')) {
             $customer->address = $request->get('address');
         }
